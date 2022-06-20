@@ -1,14 +1,15 @@
-# Welcome to your CDK TypeScript project
+# SwapALeaseMonitor CDK
 
-This is a blank project for CDK development with TypeScript.
+This packages contains the infrastructure for the SwapALeaseMonitor.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+[diagram](./img/SwapALeaseMonitor.jpg)
 
-## Useful commands
+The SwapALeaseMonitor is a construct which periodically will scrape the newest lease transfer listings 
+for SwapALease.com based on configurable parameters such as price, make, desired length and etc. 
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+It will store the listings in s3 and on eachj subsequent run the monitor will compare freshly retrieved 
+listings with those it had previously seen. If new entries are discovered it will send and email 
+to subscribers to inform of the new transfer opportunity. 
+
+Optionally, the monitor can be congfigured to watch for "high value" listings and if discovered will
+send a sms message to consumers.

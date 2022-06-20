@@ -2,7 +2,7 @@
 
 This packages contains the infrastructure for the SwapALeaseMonitor.
 
-[diagram](./img/SwapALeaseMonitor.jpg)
+![diagram](./img/SwapALeaseMonitor.jpg)
 
 The SwapALeaseMonitor is a construct which periodically will scrape the newest lease transfer listings 
 for SwapALease.com based on configurable parameters such as price, make, desired length and etc. 

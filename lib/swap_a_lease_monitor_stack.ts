@@ -38,7 +38,7 @@ export class SwapALeaseMonitorStack extends Stack {
       roleName: "SwapALeaseMonitorRole",
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName("AWSLambdaBasicExecutionRole"),
+        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
         ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess")
       ]
     });

@@ -1,7 +1,7 @@
 import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { Role, ManagedPolicy, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
@@ -10,13 +10,13 @@ export class SwapALeaseMonitorStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const listingsBucket: Bucket = this.createListingsBucket();
     const swapALeaseMonitorRole: Role = this.createSwapALeaseMonitorLambdaRole();
     const swapALeaseMonitorLambda = this.createSwapALeaseMonitorLambda(swapALeaseMonitorRole);
-    const periodicTrigger: Rule = this.createPeriodicTrigger();
-
-    listingsBucket.grantReadWrite(swapALeaseMonitorRole);
     
+    const swapALeaseListingsTable = this.createListingsTable();
+    swapALeaseListingsTable.grantFullAccess(swapALeaseMonitorRole);
+    
+    const periodicTrigger: Rule = this.createPeriodicTrigger();
     periodicTrigger.addTarget(new LambdaFunction(swapALeaseMonitorLambda, {
       retryAttempts: 0
     }));
@@ -44,11 +44,11 @@ export class SwapALeaseMonitorStack extends Stack {
     });
   }
 
-  private createListingsBucket(): Bucket {
-    return new Bucket(this, 'SwapALeaseMonitorListingsBucket',{
-      bucketName: "swap-a-lease-listings",
-      removalPolicy: RemovalPolicy.DESTROY, 
-      autoDeleteObjects: true
+  private createListingsTable(): Table {
+    return new Table(this, 'SwapALeaseListingsTable', {
+      partitionKey: {name: "make", type: AttributeType.STRING},
+      tableName: "SwapALeaseListingsTable", 
+      removalPolicy: RemovalPolicy.DESTROY
     });
   }
 

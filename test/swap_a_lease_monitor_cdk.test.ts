@@ -16,10 +16,10 @@ test('HelloFunction Created', () => {
     });
 });
 
-test('ListingsBucket Created', () => {
+test('ListingsTable Created', () => {
     const template = Template.fromStack(stack);
-    template.hasResourceProperties('AWS::S3::Bucket', {
-      BucketName: "swap-a-lease-listings"
+    template.hasResourceProperties('AWS::DynamoDB::Table', {
+      TableName: "SwapALeaseListingsTable"
     })
 });
 

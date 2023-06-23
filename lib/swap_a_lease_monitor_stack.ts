@@ -46,7 +46,7 @@ export class SwapALeaseMonitorStack extends Stack {
 
   private createListingsTable(): Table {
     return new Table(this, 'SwapALeaseListingsTable', {
-      partitionKey: {name: "make", type: AttributeType.STRING},
+      partitionKey: {name: "monitorInstanceName", type: AttributeType.STRING},
       tableName: "SwapALeaseListingsTable", 
       removalPolicy: RemovalPolicy.DESTROY
     });

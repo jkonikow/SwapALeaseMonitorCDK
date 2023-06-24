@@ -6,9 +6,11 @@
   },
   "scripts": {
     "build": "tsc",
+    "bundle-lambda": "cd lib/lambda && npm install && zip -r ../../build/lambda.zip *",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "clean": "rm -rf dist && rm -rf build/*"
   },
   "devDependencies": {
     "@types/jest": "^27.5.2",

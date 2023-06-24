@@ -25,10 +25,10 @@ export class SwapALeaseMonitorStack extends Stack {
   private createSwapALeaseMonitorLambda(executionRole: Role): Function {
     return new Function(this, 'HelloHandler', {
       runtime: Runtime.NODEJS_14_X,
-      code: Code.fromAsset('lambda'),
+      code: Code.fromAsset('build/lambda.zip'),
       handler: 'hello.handler',
       functionName: "HelloFunction",
-      description: "Simple hellow world function for testing event bridge connectivity",
+      description: "Simple hello world function for testing event bridge connectivity",
       role: executionRole
     });
   }

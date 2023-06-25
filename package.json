@@ -1,5 +1,5 @@
 {
-  "name": "@jkon1513/swap_a_lease_monitor_cdk",
+  "name": "@jkonikow/swap_a_lease_monitor_cdk",
   "version": "0.1.0",
   "bin": {
     "swap_a_lease_monitor_cdk": "bin/swap_a_lease_monitor_cdk.js"

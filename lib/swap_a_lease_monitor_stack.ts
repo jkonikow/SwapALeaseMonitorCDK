@@ -1,35 +1,46 @@
-import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import {Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { Role, ManagedPolicy, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
+import {Rule, RuleTargetInput, Schedule} from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
+import * as dotenv from 'dotenv';
+
+// load the environment vars
+dotenv.config();
 
 export class SwapALeaseMonitorStack extends Stack {
+  private readonly swapALeaseMonitorLambda: Function;
+  private readonly swapALeaseMonitorRole: Role;
+  private readonly swapALeaseMonitorListingsTable: Table;
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const swapALeaseMonitorRole: Role = this.createSwapALeaseMonitorLambdaRole();
-    const swapALeaseMonitorLambda = this.createSwapALeaseMonitorLambda(swapALeaseMonitorRole);
+    this.swapALeaseMonitorRole = this.createSwapALeaseMonitorLambdaRole();
+    this.swapALeaseMonitorLambda = this.createSwapALeaseMonitorLambda();
     
-    const swapALeaseListingsTable = this.createListingsTable();
-    swapALeaseListingsTable.grantFullAccess(swapALeaseMonitorRole);
-    
-    const periodicTrigger: Rule = this.createPeriodicTrigger();
-    periodicTrigger.addTarget(new LambdaFunction(swapALeaseMonitorLambda, {
-      retryAttempts: 0
-    }));
+    this.swapALeaseMonitorListingsTable = this.createListingsTable();
+    this.swapALeaseMonitorListingsTable.grantFullAccess(this.swapALeaseMonitorRole);
+
+    this.createMonitors();
   }
 
-  private createSwapALeaseMonitorLambda(executionRole: Role): Function {
-    return new Function(this, 'HelloHandler', {
+  private createSwapALeaseMonitorLambda(): Function {
+    return new Function(this, 'SwapALeaseMonitorLambda', {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset('build/lambda.zip'),
-      handler: 'hello.handler',
-      functionName: "HelloFunction",
-      description: "Simple hello world function for testing event bridge connectivity",
-      role: executionRole
+      handler: 'index.handler',
+      functionName: "SwapALeaseMonitorLambda",
+      description: "Lambda which monitors SwapALease for new listings",
+      timeout: Duration.minutes(1),
+      role: this.swapALeaseMonitorRole,
+      environment: {
+        SENDER_EMAIL: process.env.SENDER_EMAIL!,
+        RECIPIENT_EMAIL: process.env.RECIPIENT_EMAIL!,
+        SES_TEMPLATE_NAME: process.env.SES_TEMPLATE_NAME!,
+        SES_CONFIG: process.env.SES_CONFIG!
+      }
     });
   }
 
@@ -39,7 +50,8 @@ export class SwapALeaseMonitorStack extends Stack {
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
-        ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess")
+        ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess"),
+        ManagedPolicy.fromAwsManagedPolicyName("AmazonSESFullAccess")
       ]
     });
   }
@@ -52,14 +64,58 @@ export class SwapALeaseMonitorStack extends Stack {
     });
   }
 
-  // todo make hourly after testing
-  private createPeriodicTrigger(): Rule {
-    return new Rule(this, "ScheduleRule", {
-      description: "Periodic trigger for SwapALeaseMonitor",
-      ruleName: "SwapALeaseMonitorPeriodicTrigger",
-      schedule: Schedule.cron({minute: "0", hour: "4"})
+  private createMonitors() {
+    const economicValue: SwapALeaseMonitorRuleInput = {
+      monitorName: "EconomicValue",
+      zip: "07645",
+      minMilesPerMonth: "1000",
+      maxLeasePayment : "320",
+      maxMilesFromZip : "100",
+      minMonthsRemaining: "12",
+      maxMonthsRemaining: "24",
+      preferredMakes: []
+    }
+    this.createMonitorInstance(economicValue);
+
+    const bmwAndAudi: SwapALeaseMonitorRuleInput = {
+      monitorName: "BmwAndAudi",
+      zip: "07645",
+      minMilesPerMonth: "1000",
+      maxLeasePayment : "500",
+      maxMilesFromZip : "100",
+      minMonthsRemaining: "12",
+      maxMonthsRemaining: "24",
+      preferredMakes: ["BMW", "Audi"]
+    }
+    this.createMonitorInstance(bmwAndAudi);
+  }
+
+  private createMonitorInstance(input: SwapALeaseMonitorRuleInput): Rule {
+    const monitor: Rule = new Rule(this, `SwapALeaseMonitorRule-${input.monitorName}`, {
+      description: `Periodic trigger for SwapALeaseMonitor-${input.monitorName}`,
+      ruleName: `SwapALeaseMonitor-${input.monitorName}`,
+      schedule: Schedule.rate(Duration.hours(6)),
+      enabled: false
     });
+
+    monitor.addTarget(new LambdaFunction(this.swapALeaseMonitorLambda, {
+      retryAttempts: 0,
+      event: RuleTargetInput.fromObject(input)
+    }));
+
+    return monitor;
   }
 }
+
+type SwapALeaseMonitorRuleInput = {
+  monitorName: string,
+  zip: string,
+  minMilesPerMonth: string,
+  maxLeasePayment: string,
+  maxMilesFromZip: string,
+  minMonthsRemaining: string,
+  maxMonthsRemaining: string,
+  preferredMakes: string[],
+};
 
 

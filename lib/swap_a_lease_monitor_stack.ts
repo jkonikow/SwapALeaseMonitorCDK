@@ -28,7 +28,7 @@ export class SwapALeaseMonitorStack extends Stack {
 
   private createSwapALeaseMonitorLambda(): Function {
     return new Function(this, 'SwapALeaseMonitorLambda', {
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_18_X,
       code: Code.fromAsset('build/lambda.zip'),
       handler: 'index.handler',
       functionName: "SwapALeaseMonitorLambda",

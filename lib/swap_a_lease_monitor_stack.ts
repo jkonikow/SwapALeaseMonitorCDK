@@ -26,6 +26,7 @@ export class SwapALeaseMonitorStack extends Stack {
     this.createMonitors();
   }
 
+  // TODO: currently the build folder is not generated as expected and is being created manually.
   private createSwapALeaseMonitorLambda(): Function {
     return new Function(this, 'SwapALeaseMonitorLambda', {
       runtime: Runtime.NODEJS_18_X,
@@ -69,7 +70,7 @@ export class SwapALeaseMonitorStack extends Stack {
       monitorName: "EconomicValue",
       zip: "07645",
       minMilesPerMonth: "1000",
-      maxLeasePayment : "320",
+      maxLeasePayment : "500",
       maxMilesFromZip : "100",
       minMonthsRemaining: "12",
       maxMonthsRemaining: "24",
@@ -81,7 +82,7 @@ export class SwapALeaseMonitorStack extends Stack {
       monitorName: "BmwAndAudi",
       zip: "07645",
       minMilesPerMonth: "1000",
-      maxLeasePayment : "500",
+      maxLeasePayment : "750",
       maxMilesFromZip : "100",
       minMonthsRemaining: "12",
       maxMonthsRemaining: "24",

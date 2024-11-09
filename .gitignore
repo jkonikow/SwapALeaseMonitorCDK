@@ -7,7 +7,6 @@ dist
 build
 .idea
 .env
-**/.npmrc
 .DS_Store
 
 # CDK asset staging directory
